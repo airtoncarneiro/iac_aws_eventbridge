@@ -1,0 +1,2 @@
+Creating a Rest API with Infrastructure as Code (Terraform) & Serverless (Lambda + Python) - Part 1
+https://dev.to/aws-builders/creating-a-rest-api-with-infrastructure-as-code-terraform-serverless-lambda-python-part-1-3mbp
