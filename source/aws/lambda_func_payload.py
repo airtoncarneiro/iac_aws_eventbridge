@@ -1,4 +1,4 @@
-def lambda_handler(event, context):
+def capture_external_post_event_to_kinesis(event, context):
     import json
     import boto3
     
