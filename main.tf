@@ -79,14 +79,14 @@ resource "aws_api_gateway_integration" "integration" {
   uri                     = aws_lambda_function.lambda_func_payload.invoke_arn
 }
 
-# resource "aws_lambda_permission" "permission" {
-#   statement_id  = "AllowExecutionFromAPIGateway"
-#   action        = "lambda:InvokeFunction"
-#   function_name = aws_lambda_function.lambda_func.function_name
-#   principal     = "apigateway.amazonaws.com"
+resource "aws_lambda_permission" "permission" {
+  statement_id  = "AllowExecutionFromAPIGateway"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.lambda_func_payload.function_name
+  principal     = "apigateway.amazonaws.com"
 
-#   source_arn = "${aws_api_gateway_rest_api.api_to_lambda_func_payload.execution_arn}/*/${aws_api_gateway_method.method.http_method}${aws_api_gateway_resource.resource.path}"
-# }
+  source_arn = "${aws_api_gateway_rest_api.api_to_lambda_func_payload.execution_arn}/*/${aws_api_gateway_method.method.http_method}${aws_api_gateway_resource.resource.path}"
+}
 
 # resource "aws_kinesis_stream" "kinesis_stream" {
 #   name        = "kinesis_stream"
