@@ -30,22 +30,26 @@ EOF
 }
 
 
-# resource "aws_iam_role_policy_attachment" "lambda_e_kinesis_policy" {
-#   role       = aws_iam_role.lambda_e_kinesis_role.name
-#   policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaKinesisExecutionRole"
-# }
+data "archive_file" "lambda_func_payload" {
+  type        = "zip"
+  source_dir  = "${path.module}/source/aws"
+  output_path = "${path.module}/func_payload.zip"
+}
 
-# resource "aws_lambda_function" "lambda_func_payload" {
-#   function_name = "capture_external_post_event_to_kinesis"
 
-#   filename         = "lambda_func_payload.zip"
-#   role             = aws_iam_role.lambda_e_kinesis_role.arn
-#   handler          = "lambda_func_payload.capture_external_post_event_to_kinesis"
+resource "aws_iam_role_policy_attachment" "lambda_e_kinesis_policy" {
+  role       = aws_iam_role.lambda_e_kinesis_role.name
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaKinesisExecutionRole"
+}
 
-#   source_code_hash = filebase64sha256("lambda_func_payload.zip")
-
-#   runtime = "python3.8"
-# }
+resource "aws_lambda_function" "lambda_func_payload" {
+  function_name = "capture_external_post_event_to_kinesis"
+  filename         = data.archive_file.lambda_func_payload.output_path
+  role             = aws_iam_role.lambda_e_kinesis_role.arn
+  handler          = "lambda_func_payload.capture_external_post_event_to_kinesis"
+  source_code_hash = filebase64sha256(data.archive_file.lambda_func_payload.output_path)
+  runtime = "python3.8"
+}
 
 # resource "aws_api_gateway_rest_api" "api" {
 #   name        = "api_name"
