@@ -107,7 +107,7 @@ resource "aws_lambda_permission" "permission" {
 }
 
 resource "random_pet" "unique_id" {
-  length = 2
+  length    = 2
   separator = "-"
 }
 resource "aws_s3_bucket" "bucket" {
@@ -115,7 +115,7 @@ resource "aws_s3_bucket" "bucket" {
 }
 
 output "bucket_name" {
-  value = "${aws_s3_bucket.bucket.bucket}"
+  value = aws_s3_bucket.bucket.bucket
 }
 
 resource "aws_iam_policy" "s3_bucket_policy" {
@@ -164,40 +164,40 @@ data "aws_iam_policy_document" "private" {
   }
 }
 
-# resource "aws_iam_role_policy" "kinesis_put_record_policy" {
-#   name = "kinesis_put_record_policy"
-#   role = aws_iam_role.lambda_and_kinesis_role.id
+resource "aws_iam_role_policy" "kinesis_put_record_policy" {
+  name = "kinesis_put_record_policy"
+  role = aws_iam_role.lambda_and_kinesis_role.id
 
-#   policy = jsonencode({
-#     Version = "2012-10-17"
-#     Statement = [
-#       {
-#         Action = [
-#           "kinesis:PutRecord",
-#           "kinesis:PutRecords"
-#         ]
-#         Effect   = "Allow"
-#         Resource = aws_kinesis_stream.kinesis_stream.arn
-#       }
-#     ]
-#   })
-# }
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Action = [
+          "kinesis:PutRecord",
+          "kinesis:PutRecords"
+        ]
+        Effect   = "Allow"
+        Resource = aws_kinesis_stream.kinesis_stream.arn
+      }
+    ]
+  })
+}
 
-# resource "aws_kinesis_stream" "kinesis_stream" {
-#   name        = "kinesis_stream"
-#   shard_count = 1
-# }
+resource "aws_kinesis_stream" "kinesis_stream" {
+  name        = "kinesis_stream"
+  shard_count = 1
+}
 
-# resource "aws_kinesis_firehose_delivery_stream" "firehose_stream" {
-#   name        = "firehose_stream"
-#   destination = "extended_s3"
+resource "aws_kinesis_firehose_delivery_stream" "firehose_stream" {
+  name        = "firehose_stream"
+  destination = "extended_s3"
 
-#   extended_s3_configuration {
-#     role_arn            = aws_iam_role.lambda_and_kinesis_role.arn
-#     bucket_arn          = aws_s3_bucket.bucket.arn
-#     prefix              = "nome_prefixo/"
-#     error_output_prefix = "nome_prefixo_erro/"
-#     s3_backup_mode      = "Disabled"
-#     compression_format  = "UNCOMPRESSED"
-#   }
-# }
+  extended_s3_configuration {
+    role_arn            = aws_iam_role.lambda_and_kinesis_role.arn
+    bucket_arn          = aws_s3_bucket.bucket.arn
+    prefix              = "nome_prefixo/"
+    error_output_prefix = "nome_prefixo_erro/"
+    s3_backup_mode      = "Disabled"
+    compression_format  = "UNCOMPRESSED"
+  }
+}
