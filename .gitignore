@@ -2,3 +2,5 @@ terraform.tfstate*
 .terraform*
 
 .*env
+
+func_payload.zip
