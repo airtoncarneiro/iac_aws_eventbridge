@@ -1,3 +1,4 @@
 requests
 fakedadosbr
 #python-dotenv
+subprocess
