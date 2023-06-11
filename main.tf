@@ -9,8 +9,8 @@ provider "aws" {
   }
 }
 
-resource "aws_iam_role" "lambda_e_kinesis_policy" {
-  name = "lambda_e_kinesis_policy"
+resource "aws_iam_role" "lambda_e_kinesis_role" {
+  name = "lambda_e_kinesis_role"
 
   assume_role_policy = <<EOF
 {
@@ -30,23 +30,22 @@ EOF
 }
 
 
-# resource "aws_iam_role_policy_attachment" "role_lambda_e_kinesis_policy_policy" {
-#   role       = aws_iam_role.lambda_e_kinesis_policy.name
+# resource "aws_iam_role_policy_attachment" "lambda_e_kinesis_policy" {
+#   role       = aws_iam_role.lambda_e_kinesis_role.name
 #   policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaKinesisExecutionRole"
 # }
 
-# resource "aws_lambda_function" "lambda_func" {
-#   function_name = "lambda_function_name"
+# resource "aws_lambda_function" "lambda_func_payload" {
+#   function_name = "capture_external_post_event_to_kinesis"
 
 #   filename         = "lambda_func_payload.zip"
-#   role             = aws_iam_role.lambda_e_kinesis_policy.arn
-#   handler          = "lambda_func_payload.lambda_func_payload"
+#   role             = aws_iam_role.lambda_e_kinesis_role.arn
+#   handler          = "lambda_func_payload.capture_external_post_event_to_kinesis"
 
 #   source_code_hash = filebase64sha256("lambda_func_payload.zip")
 
 #   runtime = "python3.8"
 # }
-
 
 # resource "aws_api_gateway_rest_api" "api" {
 #   name        = "api_name"
@@ -95,7 +94,7 @@ EOF
 #   destination = "extended_s3"
 
 #   extended_s3_configuration {
-#     role_arn            = aws_iam_role.lambda_e_kinesis_policy.arn
+#     role_arn            = aws_iam_role.lambda_e_kinesis_role.arn
 #     bucket_arn          = "arn:aws:s3:::mychallengeoneventbridge"
 #     prefix              = "nome_prefixo/"
 #     error_output_prefix = "nome_prefixo_erro/"
