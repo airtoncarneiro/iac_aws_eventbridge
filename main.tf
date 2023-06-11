@@ -3,7 +3,7 @@ provider "aws" {
 
   default_tags {
     tags = {
-      autor = var.autor,
+      autor   = var.autor,
       projeto = var.projeto
     }
   }
@@ -43,12 +43,13 @@ resource "aws_iam_role_policy_attachment" "lambda_e_kinesis_policy" {
 }
 
 resource "aws_lambda_function" "lambda_func_payload" {
-  function_name = "capture_external_post_event_to_kinesis"
+  function_name    = "capture_external_post_event_to_kinesis"
   filename         = data.archive_file.lambda_func_payload.output_path
   role             = aws_iam_role.lambda_and_kinesis_role.arn
   handler          = "lambda_func_payload.capture_external_post_event_to_kinesis"
   source_code_hash = filebase64sha256(data.archive_file.lambda_func_payload.output_path)
-  runtime = "python3.8"
+  timeout          = 60
+  runtime          = "python3.8"
 }
 
 resource "aws_api_gateway_rest_api" "api_to_lambda_func_payload" {
@@ -105,8 +106,16 @@ resource "aws_lambda_permission" "permission" {
   source_arn = "${aws_api_gateway_rest_api.api_to_lambda_func_payload.execution_arn}/*/${aws_api_gateway_method.method.http_method}${aws_api_gateway_resource.resource.path}"
 }
 
+resource "random_pet" "unique_id" {
+  length = 2
+  separator = "-"
+}
 resource "aws_s3_bucket" "bucket" {
-  bucket = "eventbridge-handson"
+  bucket = "eventbridge-${random_pet.unique_id.id}"
+}
+
+output "bucket_name" {
+  value = "${aws_s3_bucket.bucket.bucket}"
 }
 
 resource "aws_iam_policy" "s3_bucket_policy" {
@@ -155,6 +164,24 @@ data "aws_iam_policy_document" "private" {
   }
 }
 
+# resource "aws_iam_role_policy" "kinesis_put_record_policy" {
+#   name = "kinesis_put_record_policy"
+#   role = aws_iam_role.lambda_and_kinesis_role.id
+
+#   policy = jsonencode({
+#     Version = "2012-10-17"
+#     Statement = [
+#       {
+#         Action = [
+#           "kinesis:PutRecord",
+#           "kinesis:PutRecords"
+#         ]
+#         Effect   = "Allow"
+#         Resource = aws_kinesis_stream.kinesis_stream.arn
+#       }
+#     ]
+#   })
+# }
 
 # resource "aws_kinesis_stream" "kinesis_stream" {
 #   name        = "kinesis_stream"

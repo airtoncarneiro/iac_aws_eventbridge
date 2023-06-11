@@ -6,12 +6,12 @@ variable "aws_region" {
 
 variable "autor" {
   description = "Autor do projeto"
-  type = string
-  default = "airton"
+  type        = string
+  default     = "airton"
 }
 
 variable "projeto" {
   description = "Nome do projeto"
-  type = string
-  default = "Hands On - Event Bridge"
+  type        = string
+  default     = "Hands On - Event Bridge"
 }
