@@ -6,7 +6,7 @@
           "s3:PutBucketPolicy"
         ],
         "Effect": "Allow",
-        "Resource": "arn:aws:s3:::*"
+        "Resource": "${aws_s3_bucket.bucket.arn}"
       }
     ]
   }

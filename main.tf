@@ -13,7 +13,7 @@ resource "aws_iam_role" "lambda_and_kinesis_role" {
   name = "lambda_and_kinesis_role"
 
   description = "Role para que a Lambda e Kinesis se interajam"
-  assume_role_policy = file("/source/aws/lambda_and_kinesis_role.json")
+  assume_role_policy = file("${var.json_path}lambda_and_kinesis_role.json")
 }
 
 
@@ -105,7 +105,7 @@ resource "aws_iam_policy" "s3_bucket_policy" {
   path        = "/"
   description = "Policy for S3 bucket policy operations"
 
-  policy = file("/source/aws/s3_policy.json")
+  policy = file("${var.json_path}s3_policy.json")
 }
 
 
@@ -138,19 +138,7 @@ resource "aws_iam_role_policy" "kinesis_put_record_policy" {
   name = "kinesis_put_record_policy"
   role = aws_iam_role.lambda_and_kinesis_role.id
 
-  policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Action = [
-          "kinesis:PutRecord",
-          "kinesis:PutRecords"
-        ]
-        Effect   = "Allow"
-        Resource = aws_kinesis_stream.kinesis_stream.arn
-      }
-    ]
-  })
+  policy = file("${var.json_path}kinesis_put_record_policy.json")
 }
 
 resource "aws_kinesis_stream" "kinesis_stream" {
@@ -165,8 +153,8 @@ resource "aws_kinesis_firehose_delivery_stream" "firehose_stream" {
   extended_s3_configuration {
     role_arn            = aws_iam_role.lambda_and_kinesis_role.arn
     bucket_arn          = aws_s3_bucket.bucket.arn
-    prefix              = "nome_prefixo/"
-    error_output_prefix = "nome_prefixo_erro/"
+    prefix              = "my_stream/"
+    error_output_prefix = "my_stream_error/"
     s3_backup_mode      = "Disabled"
     compression_format  = "UNCOMPRESSED"
   }

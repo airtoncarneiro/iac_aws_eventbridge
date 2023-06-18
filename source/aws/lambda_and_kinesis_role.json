@@ -7,7 +7,7 @@
           "Service": ["lambda.amazonaws.com", "firehose.amazonaws.com"]
         },
         "Effect": "Allow",
-        "Sid": ""
+        "Sid": "LambdaAndFirehoseAssumeRole"
       }
     ]
   }
