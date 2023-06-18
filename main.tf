@@ -6,6 +6,12 @@ data "archive_file" "lambda_func_payload" {
 
 resource "aws_s3_bucket" "bucket" {
   bucket = "eventbridge-handson"
+}
+
+resource "aws_s3_bucket_acl" "bucket_acl" {
+  depends_on = [aws_s3_bucket.bucket]
+
+  bucket = aws_s3_bucket.bucket.id
   acl    = "private"
 }
 
