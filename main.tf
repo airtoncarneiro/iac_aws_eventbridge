@@ -1,14 +1,3 @@
-provider "aws" {
-  region = var.aws_region
-
-  default_tags {
-    tags = {
-      autor   = var.autor,
-      projeto = var.projeto
-    }
-  }
-}
-
 data "archive_file" "lambda_func_payload" {
   type        = "zip"
   source_dir  = "${path.module}/source/aws"
@@ -17,6 +6,7 @@ data "archive_file" "lambda_func_payload" {
 
 resource "aws_s3_bucket" "bucket" {
   bucket = "eventbridge-handson"
+  acl    = "private"
 }
 
 data "aws_iam_policy_document" "private" {
@@ -115,15 +105,6 @@ resource "aws_kinesis_stream" "kinesis_stream" {
 #     compression_format  = "UNCOMPRESSED"
 #   }
 # }
-module "firehose" {
-  source                    = "fdmsantos/kinesis-firehose/aws"
-  version                   = "1.1.1"
-  name                      = "firehose-delivery-stream"
-  enable_kinesis_source     = true
-  kinesis_source_stream_arn = aws_kinesis_stream.kinesis_stream.arn
-  destination               = "extended_s3"
-  s3_bucket_arn             = aws_s3_bucket.bucket.arn
-}
 
 resource "aws_api_gateway_rest_api" "api_to_lambda_func_payload" {
   name        = "api_on_gateway"
