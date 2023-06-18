@@ -9,25 +9,72 @@ provider "aws" {
   }
 }
 
-resource "aws_iam_role" "lambda_and_kinesis_role" {
-  name = "lambda_and_kinesis_role"
-
-  description = "Role para que a Lambda e Kinesis se interajam"
-  assume_role_policy = file("${var.json_path}lambda_and_kinesis_role.json")
-}
-
-
 data "archive_file" "lambda_func_payload" {
   type        = "zip"
   source_dir  = "${path.module}/source/aws"
   output_path = "${path.module}/func_payload.zip"
 }
 
+resource "aws_s3_bucket" "bucket" {
+  bucket = "eventbridge-handson"
+}
+
+output "bucket_name" {
+  value = aws_s3_bucket.bucket.bucket
+}
+
+data "aws_iam_policy_document" "private" {
+  statement {
+    actions   = ["s3:GetObject"]
+    resources = ["arn:aws:s3:::${aws_s3_bucket.bucket.id}/*"]
+
+    principals {
+      type        = "AWS"
+      identifiers = ["*"]
+    }
+
+    condition {
+      test     = "StringNotEquals"
+      variable = "aws:userid"
+      values   = ["*"]
+    }
+  }
+}
+
+resource "aws_iam_role" "lambda_and_kinesis_role" {
+  name = "lambda_and_kinesis_role"
+
+  description = "Role para que a Lambda e Kinesis se interajam"
+  assume_role_policy = file("lambda_and_kinesis_role.json")
+}
 
 resource "aws_iam_role_policy_attachment" "lambda_e_kinesis_policy" {
   role       = aws_iam_role.lambda_and_kinesis_role.name
   policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaKinesisExecutionRole"
 }
+
+resource "aws_iam_policy" "s3_bucket_policy" {
+  name        = "S3BucketPolicy"
+  path        = "/"
+  description = "Policy for S3 bucket policy operations"
+
+  policy = templatefile("s3_policy.tpl", { bucket_arn = aws_s3_bucket.bucket.arn })
+}
+
+
+resource "aws_iam_policy_attachment" "s3_bucket_policy_attachment" {
+  name       = "S3BucketPolicyAttachment"
+  roles      = [aws_iam_role.lambda_and_kinesis_role.name]
+  policy_arn = aws_iam_policy.s3_bucket_policy.arn
+}
+
+resource "aws_iam_role_policy" "kinesis_put_record_policy" {
+  name = "kinesis_put_record_policy"
+  role = aws_iam_role.lambda_and_kinesis_role.id
+
+  policy = templatefile("kinesis_put_record_policy.tpl", { stream_arn = aws_kinesis_stream.kinesis_stream.arn })
+}
+
 
 resource "aws_lambda_function" "lambda_func_payload" {
   function_name    = "capture_external_post_event_to_kinesis"
@@ -38,6 +85,40 @@ resource "aws_lambda_function" "lambda_func_payload" {
   timeout          = 60
   runtime          = "python3.8"
 }
+
+resource "aws_lambda_permission" "permission" {
+  statement_id  = "AllowExecutionFromAPIGateway"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.lambda_func_payload.function_name
+  principal     = "apigateway.amazonaws.com"
+
+  source_arn = "${aws_api_gateway_rest_api.api_to_lambda_func_payload.execution_arn}/*/${aws_api_gateway_method.method.http_method}${aws_api_gateway_resource.resource.path}"
+}
+
+resource "aws_kinesis_stream" "kinesis_stream" {
+  name        = "kinesis_stream"
+  shard_count = 1
+  retention_period = 24
+}
+
+resource "aws_kinesis_firehose_delivery_stream" "firehose_stream" {
+  name        = "firehose_stream"
+  destination = "extended_s3"
+
+  extended_s3_configuration {
+    role_arn            = aws_iam_role.lambda_and_kinesis_role.arn
+    bucket_arn          = aws_s3_bucket.bucket.arn
+    prefix              = ""
+    error_output_prefix = ""
+    s3_backup_mode      = "Disabled"
+    compression_format  = "UNCOMPRESSED"
+
+    kinesis_stream_source_configuration {
+      kinesis_stream_arn = aws_kinesis_stream.kinesis_stream.arn
+    }
+  }
+}
+
 
 resource "aws_api_gateway_rest_api" "api_to_lambda_func_payload" {
   name        = "api_on_gateway"
@@ -71,7 +152,6 @@ resource "aws_api_gateway_deployment" "deployment" {
   rest_api_id = aws_api_gateway_rest_api.api_to_lambda_func_payload.id
   stage_name  = "dev"
 
-  # Este recurso depende do resource, method e integration, então nós os incluímos no depends_on
   depends_on = [
     aws_api_gateway_resource.resource,
     aws_api_gateway_method.method,
@@ -81,81 +161,4 @@ resource "aws_api_gateway_deployment" "deployment" {
 
 output "invoke_url" {
   value = "https://${aws_api_gateway_deployment.deployment.rest_api_id}.execute-api.${var.aws_region}.amazonaws.com/${aws_api_gateway_deployment.deployment.stage_name}"
-}
-
-resource "aws_lambda_permission" "permission" {
-  statement_id  = "AllowExecutionFromAPIGateway"
-  action        = "lambda:InvokeFunction"
-  function_name = aws_lambda_function.lambda_func_payload.function_name
-  principal     = "apigateway.amazonaws.com"
-
-  source_arn = "${aws_api_gateway_rest_api.api_to_lambda_func_payload.execution_arn}/*/${aws_api_gateway_method.method.http_method}${aws_api_gateway_resource.resource.path}"
-}
-
-resource "aws_s3_bucket" "bucket" {
-  bucket = "eventbridge-handson"
-}
-
-output "bucket_name" {
-  value = aws_s3_bucket.bucket.bucket
-}
-
-resource "aws_iam_policy" "s3_bucket_policy" {
-  name        = "S3BucketPolicy"
-  path        = "/"
-  description = "Policy for S3 bucket policy operations"
-
-  policy = file("${var.json_path}s3_policy.json")
-}
-
-
-resource "aws_iam_policy_attachment" "s3_bucket_policy_attachment" {
-  name       = "S3BucketPolicyAttachment"
-  roles      = [aws_iam_role.lambda_and_kinesis_role.name]
-  policy_arn = aws_iam_policy.s3_bucket_policy.arn
-}
-
-
-data "aws_iam_policy_document" "private" {
-  statement {
-    actions   = ["s3:GetObject"]
-    resources = ["arn:aws:s3:::${aws_s3_bucket.bucket.id}/*"]
-
-    principals {
-      type        = "AWS"
-      identifiers = ["*"]
-    }
-
-    condition {
-      test     = "StringNotEquals"
-      variable = "aws:userid"
-      values   = ["*"]
-    }
-  }
-}
-
-resource "aws_iam_role_policy" "kinesis_put_record_policy" {
-  name = "kinesis_put_record_policy"
-  role = aws_iam_role.lambda_and_kinesis_role.id
-
-  policy = file("${var.json_path}kinesis_put_record_policy.json")
-}
-
-resource "aws_kinesis_stream" "kinesis_stream" {
-  name        = "kinesis_stream"
-  shard_count = 1
-}
-
-resource "aws_kinesis_firehose_delivery_stream" "firehose_stream" {
-  name        = "firehose_stream"
-  destination = "extended_s3"
-
-  extended_s3_configuration {
-    role_arn            = aws_iam_role.lambda_and_kinesis_role.arn
-    bucket_arn          = aws_s3_bucket.bucket.arn
-    prefix              = "my_stream/"
-    error_output_prefix = "my_stream_error/"
-    s3_backup_mode      = "Disabled"
-    compression_format  = "UNCOMPRESSED"
-  }
 }

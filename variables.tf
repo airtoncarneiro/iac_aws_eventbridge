@@ -16,7 +16,3 @@ variable "projeto" {
   default     = "Hands On - Event Bridge"
 }
 
-variable "json_path" {
-  description = "Path to the policy and roles files"
-  default     = "/source/aws/"
-}
