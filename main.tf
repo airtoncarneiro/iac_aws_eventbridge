@@ -19,10 +19,6 @@ resource "aws_s3_bucket" "bucket" {
   bucket = "eventbridge-handson"
 }
 
-output "bucket_name" {
-  value = aws_s3_bucket.bucket.bucket
-}
-
 data "aws_iam_policy_document" "private" {
   statement {
     actions   = ["s3:GetObject"]
@@ -101,24 +97,33 @@ resource "aws_kinesis_stream" "kinesis_stream" {
   retention_period = 24
 }
 
-resource "aws_kinesis_firehose_delivery_stream" "firehose_stream" {
-  name        = "firehose_stream"
-  destination = "extended_s3"
+# resource "aws_kinesis_firehose_delivery_stream" "firehose_stream" {
+#   name        = "firehose_stream"
+#   destination = "kinesis_stream"
 
-  extended_s3_configuration {
-    role_arn            = aws_iam_role.lambda_and_kinesis_role.arn
-    bucket_arn          = aws_s3_bucket.bucket.arn
-    prefix              = ""
-    error_output_prefix = ""
-    s3_backup_mode      = "Disabled"
-    compression_format  = "UNCOMPRESSED"
+#   kinesis_stream_source_configuration {
+#     kinesis_stream_arn = aws_kinesis_stream.kinesis_stream.arn
+#     role_arn           = aws_iam_role.lambda_and_kinesis_role.arn
+#   }
 
-    kinesis_stream_source_configuration {
-      kinesis_stream_arn = aws_kinesis_stream.kinesis_stream.arn
-    }
-  }
+#   extended_s3_configuration {
+#     role_arn            = aws_iam_role.lambda_and_kinesis_role.arn
+#     bucket_arn          = aws_s3_bucket.bucket.arn
+#     prefix              = ""
+#     error_output_prefix = ""
+#     s3_backup_mode      = "Disabled"
+#     compression_format  = "UNCOMPRESSED"
+#   }
+# }
+module "firehose" {
+  source                    = "fdmsantos/kinesis-firehose/aws"
+  version                   = "1.1.1"
+  name                      = "firehose-delivery-stream"
+  enable_kinesis_source     = true
+  kinesis_source_stream_arn = aws_kinesis_stream.kinesis_stream.arn
+  destination               = "extended_s3"
+  s3_bucket_arn             = aws_s3_bucket.bucket.arn
 }
-
 
 resource "aws_api_gateway_rest_api" "api_to_lambda_func_payload" {
   name        = "api_on_gateway"
@@ -159,6 +164,3 @@ resource "aws_api_gateway_deployment" "deployment" {
   ]
 }
 
-output "invoke_url" {
-  value = "https://${aws_api_gateway_deployment.deployment.rest_api_id}.execute-api.${var.aws_region}.amazonaws.com/${aws_api_gateway_deployment.deployment.stage_name}"
-}
