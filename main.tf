@@ -183,16 +183,16 @@ resource "aws_kinesis_stream" "kinesis_stream" {
   shard_count = 1
 }
 
-resource "aws_kinesis_firehose_delivery_stream" "firehose_stream" {
-  name        = "firehose_stream"
-  destination = "extended_s3"
+# resource "aws_kinesis_firehose_delivery_stream" "firehose_stream" {
+#   name        = "firehose_stream"
+#   destination = "extended_s3"
 
-  extended_s3_configuration {
-    role_arn            = aws_iam_role.lambda_and_kinesis_role.arn
-    bucket_arn          = aws_s3_bucket.bucket.arn
-    prefix              = "nome_prefixo/"
-    error_output_prefix = "nome_prefixo_erro/"
-    s3_backup_mode      = "Disabled"
-    compression_format  = "UNCOMPRESSED"
-  }
-}
+#   extended_s3_configuration {
+#     role_arn            = aws_iam_role.lambda_and_kinesis_role.arn
+#     bucket_arn          = aws_s3_bucket.bucket.arn
+#     prefix              = "nome_prefixo/"
+#     error_output_prefix = "nome_prefixo_erro/"
+#     s3_backup_mode      = "Disabled"
+#     compression_format  = "UNCOMPRESSED"
+#   }
+# }

@@ -21,11 +21,7 @@ def capture_external_post_event_to_kinesis(event, context):
     
     return {
         'statusCode': status_code,
-        'headers': {
-            'Access-Control-Allow-Origin': '*',
-            'Access-Control-Allow-Credentials': True,
-            'headers': { 'Content-Type': 'application/json' },
-        },
+        'headers': { 'Content-Type': 'application/json' },
         'body': json.dumps(message)
     }
 
