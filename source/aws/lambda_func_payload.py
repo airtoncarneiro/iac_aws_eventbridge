@@ -14,14 +14,18 @@ def capture_external_post_event_to_kinesis(event, context):
         )
         
         status_code = response['ResponseMetadata']['HTTPStatusCode']
-        message = "Registro enviado com sucesso"
+        message = 'Registro enviado com sucesso'
     except Exception as e:
         status_code = 500  # Código de erro interno do servidor
         message = str(e)
     
     return {
-        "statusCode": status_code,
-        "headers": { "Content-Type": "application/json" },
-        "body": json.dumps(message)
+        'statusCode': status_code,
+        'headers': {
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Credentials': True,
+            'headers': { 'Content-Type': 'application/json' },
+        },
+        'body': json.dumps(message)
     }
 
