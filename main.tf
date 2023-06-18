@@ -96,7 +96,6 @@ output "invoke_url" {
   value = "https://${aws_api_gateway_deployment.deployment.rest_api_id}.execute-api.${var.aws_region}.amazonaws.com/${aws_api_gateway_deployment.deployment.stage_name}"
 }
 
-
 resource "aws_lambda_permission" "permission" {
   statement_id  = "AllowExecutionFromAPIGateway"
   action        = "lambda:InvokeFunction"
@@ -106,12 +105,8 @@ resource "aws_lambda_permission" "permission" {
   source_arn = "${aws_api_gateway_rest_api.api_to_lambda_func_payload.execution_arn}/*/${aws_api_gateway_method.method.http_method}${aws_api_gateway_resource.resource.path}"
 }
 
-resource "random_pet" "unique_id" {
-  length    = 2
-  separator = "-"
-}
 resource "aws_s3_bucket" "bucket" {
-  bucket = "eventbridge-${random_pet.unique_id.id}"
+  bucket = "eventbridge-handson"
 }
 
 output "bucket_name" {
