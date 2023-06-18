@@ -12,21 +12,8 @@ provider "aws" {
 resource "aws_iam_role" "lambda_and_kinesis_role" {
   name = "lambda_and_kinesis_role"
 
-  assume_role_policy = <<EOF
-{
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Action": "sts:AssumeRole",
-      "Principal": {
-        "Service": ["lambda.amazonaws.com", "firehose.amazonaws.com"]
-      },
-      "Effect": "Allow",
-      "Sid": ""
-    }
-  ]
-}
-EOF
+  description = "Role para que a Lambda e Kinesis se interajam"
+  assume_role_policy = file("/source/aws/lambda_and_kinesis_role.json")
 }
 
 
@@ -118,21 +105,9 @@ resource "aws_iam_policy" "s3_bucket_policy" {
   path        = "/"
   description = "Policy for S3 bucket policy operations"
 
-  policy = <<EOF
-{
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Action": [
-        "s3:PutBucketPolicy"
-      ],
-      "Effect": "Allow",
-      "Resource": "arn:aws:s3:::*"
-    }
-  ]
+  policy = file("/source/aws/s3_policy.json")
 }
-EOF
-}
+
 
 resource "aws_iam_policy_attachment" "s3_bucket_policy_attachment" {
   name       = "S3BucketPolicyAttachment"
@@ -183,16 +158,16 @@ resource "aws_kinesis_stream" "kinesis_stream" {
   shard_count = 1
 }
 
-# resource "aws_kinesis_firehose_delivery_stream" "firehose_stream" {
-#   name        = "firehose_stream"
-#   destination = "extended_s3"
+resource "aws_kinesis_firehose_delivery_stream" "firehose_stream" {
+  name        = "firehose_stream"
+  destination = "extended_s3"
 
-#   extended_s3_configuration {
-#     role_arn            = aws_iam_role.lambda_and_kinesis_role.arn
-#     bucket_arn          = aws_s3_bucket.bucket.arn
-#     prefix              = "nome_prefixo/"
-#     error_output_prefix = "nome_prefixo_erro/"
-#     s3_backup_mode      = "Disabled"
-#     compression_format  = "UNCOMPRESSED"
-#   }
-# }
+  extended_s3_configuration {
+    role_arn            = aws_iam_role.lambda_and_kinesis_role.arn
+    bucket_arn          = aws_s3_bucket.bucket.arn
+    prefix              = "nome_prefixo/"
+    error_output_prefix = "nome_prefixo_erro/"
+    s3_backup_mode      = "Disabled"
+    compression_format  = "UNCOMPRESSED"
+  }
+}
