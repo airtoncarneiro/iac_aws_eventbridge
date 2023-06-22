@@ -138,12 +138,14 @@ resource "aws_kinesis_firehose_delivery_stream" "firehose_stream" {
     error_output_prefix = ""
     s3_backup_mode      = "Disabled"
     compression_format  = "UNCOMPRESSED"
+    buffering_size         = 1
+    buffering_interval     = 60
   }
 
   kinesis_source_configuration {
     #kinesis_stream_arn = aws_kinesis_stream.kinesis_stream.arn
-    kinesis_stream_arn = aws_iam_role.lambda_and_kinesis_role.arn
-    role_arn           = aws_iam_role.firehose_role.arn
+    kinesis_stream_arn = aws_kinesis_stream.kinesis_stream.arn
+    role_arn           = aws_iam_role.lambda_and_kinesis_role.arn
   }
 }
 
