@@ -85,8 +85,50 @@ resource "aws_kinesis_stream" "kinesis_stream" {
   retention_period = 24
 }
 
+# resource "aws_iam_role" "firehose_role" {
+#   name = "firehose_role"
+
+#   assume_role_policy = <<EOF
+# {
+#   "Version": "2012-10-17",
+#   "Statement": [
+#     {
+#       "Action": "sts:AssumeRole",
+#       "Principal": {
+#         "Service": "firehose.amazonaws.com"
+#       },
+#       "Effect": "Allow",
+#       "Sid": ""
+#     }
+#   ]
+# }
+# EOF
+# }
+
+# resource "aws_iam_role_policy" "firehose_policy" {
+#   name = "firehose_policy"
+#   role = aws_iam_role.firehose_role.id
+
+#   policy = <<EOF
+# {
+#   "Version": "2012-10-17",
+#   "Statement": [
+#     {
+#       "Effect": "Allow",
+#       "Action": [
+#         "kinesis:DescribeStream",
+#         "kinesis:GetShardIterator",
+#         "kinesis:GetRecords"
+#       ],
+#       "Resource": "${aws_kinesis_stream.kinesis_stream.arn}"
+#     }
+#   ]
+# }
+# EOF
+# }
+
 resource "aws_kinesis_firehose_delivery_stream" "firehose_stream" {
-  name        = "firehose_stream"
+  name        = "firehose_stream_3"
   destination = "extended_s3"
 
   extended_s3_configuration {
@@ -96,6 +138,12 @@ resource "aws_kinesis_firehose_delivery_stream" "firehose_stream" {
     error_output_prefix = ""
     s3_backup_mode      = "Disabled"
     compression_format  = "UNCOMPRESSED"
+  }
+
+  kinesis_source_configuration {
+    #kinesis_stream_arn = aws_kinesis_stream.kinesis_stream.arn
+    kinesis_stream_arn = aws_iam_role.lambda_and_kinesis_role.arn
+    role_arn           = aws_iam_role.firehose_role.arn
   }
 }
 
