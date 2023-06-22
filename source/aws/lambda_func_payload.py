@@ -14,7 +14,8 @@ def capture_external_post_event_to_kinesis(event, context):
         )
         
         status_code = response['ResponseMetadata']['HTTPStatusCode']
-        message = 'Registro enviado com sucesso'
+        sequence_number = response['SequenceNumber']
+        message = f'Registro enviado com sucesso. Número de sequência: {sequence_number}'
     except Exception as e:
         status_code = 500  # Código de erro interno do servidor
         message = str(e)
@@ -24,4 +25,3 @@ def capture_external_post_event_to_kinesis(event, context):
         'headers': { 'Content-Type': 'application/json' },
         'body': json.dumps(message)
     }
-
