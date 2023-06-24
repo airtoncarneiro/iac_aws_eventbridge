@@ -55,5 +55,7 @@ def send_post(url:str) -> None:
           break
 
 if __name__ == "__main__":
-  invoke_url = get_invoke_url()
+  invoke_url = get_invoke_url() + '/fake'
   send_post(invoke_url)
+
+# {"nome": "Gabriel Paulo Nicolas Vieira", "cpf": "28817614700", "data_nasc": "14/01/1945", "email": "gabrielpaulovieira@siexpress.com.br", "cep": "61602112", "endereco": "Travessa Francisco Ferreira da Silva", "numero": 776, "bairro": "Itambé", "cidade": "Caucaia", "estado": "CE", "id": 0}
