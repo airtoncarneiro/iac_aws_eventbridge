@@ -21,6 +21,13 @@ def get_invoke_url() -> str:
         return result.stdout.strip('\n').strip('"')
     else:
         raise Exception("Error getting invoke_url: " + result.stderr)
+    
+def remove_keys(data:dict, keys:list):
+    for key in keys:
+        if key in data:
+            del data[key]
+    
+    return data
 
 def send_post(url:str) -> None:
   """ Envia uma requisição POST à url informada
@@ -35,18 +42,15 @@ def send_post(url:str) -> None:
   # Assim, informa as colunas que não usaremos
   keys_to_remove = ["idade", "sexo", "rg", "signo", "mae", "pai", "senha", "telefone_fixo", "celular", "altura", "peso", "tipo_sanguineo", "cor"]
   # Quantidade de fakes gerados. Máx. 30
-  QTD = 1
+  QTD = 30
   # Dados de cidadãos fake
   cidadaos = fake_cidadao(QTD)
   # remove algumas colunas e acresenta um ID para cada cidadao
   for idx, cidadao in enumerate(cidadaos):
-      data = cidadao
-      for key in keys_to_remove:
-          if key in data:
-              del data[key]
-      data['id'] = idx
+      #cidadao = remove_keys(data=cidadao, keys=keys_to_remove)
+      cidadao['id'] = idx
 
-      response = requests.post(url, headers=headers, data=json.dumps(data))
+      response = requests.post(url, headers=headers, data=json.dumps(cidadao))
 
       if response.status_code == 200:
           print("Enviado ID: ", idx)
