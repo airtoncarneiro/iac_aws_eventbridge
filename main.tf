@@ -5,26 +5,17 @@ data "archive_file" "lambda_func_payload" {
 }
 
 resource "aws_s3_bucket" "bucket" {
-  bucket = "eventbridge-handson"
+  bucket = var.bucket
+
+  lifecycle {
+    prevent_destroy = true
+  }
 }
 
-# data "aws_iam_policy_document" "private" {
-#   statement {
-#     actions   = ["s3:GetObject"]
-#     resources = ["arn:aws:s3:::${aws_s3_bucket.bucket.id}/*"]
-
-#     principals {
-#       type        = "AWS"
-#       identifiers = ["*"]
-#     }
-
-#     condition {
-#       test     = "StringNotEquals"
-#       variable = "aws:userid"
-#       values   = ["*"]
-#     }
-#   }
-# }
+resource "aws_s3_bucket_acl" "bucket_acl" {
+  bucket = aws_s3_bucket.bucket.id
+  acl    = "private"
+}
 
 resource "aws_iam_role" "lambda_and_kinesis_role" {
   name = "lambda_and_kinesis_role"
@@ -85,48 +76,6 @@ resource "aws_kinesis_stream" "kinesis_stream" {
   retention_period = 24
 }
 
-# resource "aws_iam_role" "firehose_role" {
-#   name = "firehose_role"
-
-#   assume_role_policy = <<EOF
-# {
-#   "Version": "2012-10-17",
-#   "Statement": [
-#     {
-#       "Action": "sts:AssumeRole",
-#       "Principal": {
-#         "Service": "firehose.amazonaws.com"
-#       },
-#       "Effect": "Allow",
-#       "Sid": ""
-#     }
-#   ]
-# }
-# EOF
-# }
-
-# resource "aws_iam_role_policy" "firehose_policy" {
-#   name = "firehose_policy"
-#   role = aws_iam_role.firehose_role.id
-
-#   policy = <<EOF
-# {
-#   "Version": "2012-10-17",
-#   "Statement": [
-#     {
-#       "Effect": "Allow",
-#       "Action": [
-#         "kinesis:DescribeStream",
-#         "kinesis:GetShardIterator",
-#         "kinesis:GetRecords"
-#       ],
-#       "Resource": "${aws_kinesis_stream.kinesis_stream.arn}"
-#     }
-#   ]
-# }
-# EOF
-# }
-
 resource "aws_kinesis_firehose_delivery_stream" "firehose_stream" {
   name        = "firehose_stream_3"
   destination = "extended_s3"
@@ -134,12 +83,12 @@ resource "aws_kinesis_firehose_delivery_stream" "firehose_stream" {
   extended_s3_configuration {
     role_arn            = aws_iam_role.lambda_and_kinesis_role.arn
     bucket_arn          = aws_s3_bucket.bucket.arn
-    prefix              = ""
+    prefix              = var.bucket_bronze
     error_output_prefix = ""
     s3_backup_mode      = "Disabled"
     compression_format  = "UNCOMPRESSED"
-    buffering_size         = 1
-    buffering_interval     = 60
+    buffering_size      = 1
+    buffering_interval  = 60
   }
 
   kinesis_source_configuration {
@@ -187,4 +136,3 @@ resource "aws_api_gateway_deployment" "deployment" {
     aws_api_gateway_integration.integration,
   ]
 }
-
