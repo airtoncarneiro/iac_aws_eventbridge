@@ -1,7 +1,7 @@
 data "archive_file" "lambda_func_payload" {
   type        = "zip"
-  source_dir  = "${path.module}/source/aws"
-  output_path = "${path.module}/func_payload.zip"
+  source_dir  = "../source/aws"
+  output_path = "../func_payload.zip"
 }
 
 resource "aws_s3_bucket" "bucket" {
